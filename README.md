@@ -1,6 +1,6 @@
 # WordPress Useful Queries
 
-
+Follows a list of useful queries to handle WordPress database related tasks.
 
 ## Change Siteurl & Homeurl
 
@@ -52,7 +52,7 @@ UPDATE wp_postmeta SET meta_value = REPLACE (meta_value, 'http://www.oldsiteurl.
 
 Every default WordPress installation will create an account with a default Admin username. This is wide spread knowledge, everyone who uses WordPress knows this. However, this can be a security issue because a hacker can brutal force your WordPress admin panel. If you can change your default “Admin” username, you will give your WordPress admin panel additional security.
 
-```
+```SQL
 UPDATE wp_users SET user_login = 'Your New Username' WHERE user_login = 'Admin';
 ```
 
@@ -60,7 +60,9 @@ UPDATE wp_users SET user_login = 'Your New Username' WHERE user_login = 'Admin';
 
 Ever wanted to reset your password in WordPress, but cannot seem to use the reset password section whatever the reason?
 
+```SQL
 UPDATE wp_users SET user_pass = MD5( 'new_password' ) WHERE user_login = 'your-username';
+```
 
 ## Change Author
 
@@ -68,40 +70,52 @@ If you want to transfer the articles under Author B to merge with those under Au
 
 You will first need to obtain the author ID of both authors by going to your Author & User page in your WordPress admin panel. Click on the author’s name to view their profile. At the address bar, look for "user_id". That is the author ID information we require.
 
+```SQL
 UPDATE wp_posts SET post_author = 'new-author-id' WHERE post_author = 'old-author-id';
+```
 
 ## Delete Revision
 
 When you are editing an article in WordPress, there will be many revision copies being saved. This is a waste of resources because excessive revision records can increase the burden of the database. Over time, when you have thousands of entries, your database will have grown significantly. This will increase loop iterations, data retrieval and will affect the page loading time.
 
+```SQL
 DELETE a,b,c FROM wp_posts a
 LEFT JOIN wp_term_relationships b ON (a.ID = b.object_id)
 LEFT JOIN wp_postmeta c ON (a.ID = c.post_id)
-WHERE a.post_type = 'revision'
+WHERE a.post_type = 'revision';
+```
 
 ## Delete Post Meta
 
 Installing or removing plugins is a very common task for WordPress. Some of the plugins make use of the post meta to store data pertaining to the plugin. After you have removed the plugin, those data are still left inside the post_meta table, which will no longer be needed. Run the following query to clean up the unused post meta value. This will help to speed up and reduce the size of your database.
 
+```SQL
 DELETE FROM wp_postmeta WHERE meta_key = 'your-meta-key';
+```
 
 ## Export all Comment Emails with no Duplicate
 
 Over a period of time, your blog will have received many comments. These comments will include the email addresses left by the commenter. You can retrieve all these emails for your mailing list without any duplicate.
 
+```SQL
 SELECT DISTINCT comment_author_email FROM wp_comments;
+```
 
 ## Delete all Pingback
 
 Popular articles receive plenty of pingback. When this happens, the size of your database increases. In order to reduce size of the database, you can try removing all the pingbacks.
 
+```SQL
 DELETE FROM wp_comments WHERE comment_type = 'pingback';
+```
 
 ## Delete all Spam Comments
 
 If you have plenty of spam comments, going through each page to delete spam can be tedious and frustrating. With the following SQL query, even if you have to face deleting 500 over spam comments, it will be a breeze.
 
+```SQL
 DELETE FROM wp_comments WHERE comment_approved = 'spam';
+```
 
 * 0 = Comment Awaiting Moderation
 * 1 = Approved Comment
@@ -111,5 +125,7 @@ DELETE FROM wp_comments WHERE comment_approved = 'spam';
 
 In a WordPress database, if you run a query to delete old posts manually from MySQL, the old tags will remain and appear in your tag cloud/listing. This query allows you to identify the unused tags.
 
+```SQL
 SELECT * From wp_terms wt
 INNER JOIN wp_term_taxonomy wtt ON wt.term_id=wtt.term_id WHERE wtt.taxonomy='post_tag' AND wtt.count=0;
+```
